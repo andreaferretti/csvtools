@@ -4,7 +4,7 @@ version       = "0.1.0"
 author        = "Andrea Ferretti"
 description   = "Manage CSV files in Nim"
 license       = "Apache2"
-SkipFiles     = "test,test.nim,goog.csv"
+SkipFiles     = "test,test.nim,goog.csv,doc"
 
 [Deps]
 Requires: "nim >= 0.11.2"

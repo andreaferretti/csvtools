@@ -1,0 +1,3 @@
+nim doc2 \
+  --docSeeSrcUrl:https://github.com/unicredit/csvtools/blob/master \
+  csvtools.nim
