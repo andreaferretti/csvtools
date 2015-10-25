@@ -54,3 +54,14 @@ suite "writing csv":
   test "writing a typed row":
     let me = Person(name: "Andrea", surname: "Ferretti", age: 34)
     check(line(me) == "Andrea,Ferretti,34\r")
+  test "generating row iterator":
+    let people = [
+      Person(name: "Andrea", surname: "Ferretti", age: 34),
+      Person(name: "Marco", surname: "Firrincieli", age: 34),
+      Person(name: "Stefano", surname: "Pascolutti", age: 32)
+    ]
+    check(toSeq(lines(people)) == @[
+      "Andrea,Ferretti,34\r",
+      "Marco,Firrincieli,34\r",
+      "Stefano,Pascolutti,32\r"
+    ])

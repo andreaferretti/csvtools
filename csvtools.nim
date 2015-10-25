@@ -219,3 +219,8 @@ proc connect*(s: seq[string], separator = ',', quote = '\"'; escape = '\"'; quot
 proc line*[T](t: T, separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false): string =
   let unpack = genUnpack(T)
   connect(unpack(t), separator, quote, escape, quoteAlways)
+
+iterator lines*[T](ts: openarray[T], separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false): string =
+  let unpack = genUnpack(T)
+  for t in ts:
+    yield connect(unpack(t), separator, quote, escape, quoteAlways)
