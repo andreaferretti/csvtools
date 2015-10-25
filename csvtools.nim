@@ -204,7 +204,7 @@ proc genUnpack*(T: typedesc, dateLayout: string = nil): proc (t: T): seq[string]
 proc quoteString*(s: string, quote = '\"'; escape = '\"'): string {.inline.} =
   quote & s.replace($(quote), escape & quote) & quote
 
-proc line*(s: seq[string], separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false): string =
+proc connect*(s: seq[string], separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false): string =
   let
     newline = '\r'
     quoted = s.map(proc(x: string): string =
@@ -215,3 +215,7 @@ proc line*(s: seq[string], separator = ',', quote = '\"'; escape = '\"'; quoteAl
     )
     row = quoted.join($separator)
   return row & newline
+
+proc line*[T](t: T, separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false): string =
+  let unpack = genUnpack(T)
+  connect(unpack(t), separator, quote, escape, quoteAlways)

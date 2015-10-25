@@ -37,10 +37,10 @@ suite "reading csv":
     check(ticks[3].Open == 102.349982071)
 
 suite "writing csv":
+  type Person = object
+    name, surname: string
+    age: int
   test "converting a single row":
-    type Person = object
-      name, surname: string
-      age: int
     let
       me = Person(name: "Andrea", surname: "Ferretti", age: 34)
       unpack = genUnpack(Person)
@@ -48,6 +48,9 @@ suite "writing csv":
   test "quoting strings":
     let x = "string\""
     check(quoteString(x) == "\"string\"\"\"")
-  test "writing a single row":
+  test "writing a row from a seq":
     let x = @["Hello", "this\"", "is\\", "a,", "string"]
-    check(line(x) == "Hello,\"this\"\"\",is\\,\"a,\",string\r")
+    check(connect(x) == "Hello,\"this\"\"\",is\\,\"a,\",string\r")
+  test "writing a typed row":
+    let me = Person(name: "Andrea", surname: "Ferretti", age: 34)
+    check(line(me) == "Andrea,Ferretti,34\r")
