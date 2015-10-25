@@ -214,6 +214,4 @@ proc line*(s: seq[string], separator = ',', quote = '\"'; escape = '\"'; quoteAl
         x
     )
     row = quoted.join($separator)
-  for i in quoted:
-    echo i
   return row & newline

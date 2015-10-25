@@ -48,6 +48,6 @@ suite "writing csv":
   test "quoting strings":
     let x = "string\""
     check(quoteString(x) == "\"string\"\"\"")
-  # test "writing a single row":
-  #   let x = @["Hello", "this\"", "is\\", "a,", "string"]
-  #   check(line(x) == """Hello,this"",is\,"a,",string\n""")
+  test "writing a single row":
+    let x = @["Hello", "this\"", "is\\", "a,", "string"]
+    check(line(x) == "Hello,\"this\"\"\",is\\,\"a,\",string\r")
