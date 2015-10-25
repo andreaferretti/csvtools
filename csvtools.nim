@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os, streams, macros, parseutils, parsecsv, times
+import os, streams, macros, sequtils, strutils, parseutils, parsecsv, times
 
 ## Manage CSV files easily in Nim. At this moment only reading is supported.
 ##
@@ -201,26 +201,19 @@ proc genUnpack*(T: typedesc, dateLayout: string = nil): proc (t: T): seq[string]
   var t: T
   return genUnpackM(t, T)
 
-# proc line*[T](t: T, separator = ',', quote = '\"'; escape = '\0'; quoteAlways = false): string =
-#   var csvRow = ""
-#   for j in 0..high(csv[i]):
-#
-#       # Escape the quotes, if the user wants that.
-#       var item : string = csv[i][j]
-#       if escapeQuotes and (item.contains("\"") or item.contains("'")):
-#           item = item.replace("\"", "\\\"").replace("'", "\\'")
-#
-#       # Quote always if the user wants that, otherwise only do it if necessary.
-#       if quoteAlways:
-#           item = "\"" & item & "\""
-#       elif item.contains("\"") or item.contains("'") or item.contains(separator):
-#           item = "\"" & item & "\""
-#       else:
-#           item = item.quoteIfContainsWhite()
-#
-#       # Add the item.
-#       csvStrRow &= item
-#
-#       # Only add a separator if it isn't the last item.
-#       if j != high(csv[i]):
-#           csvStrRow &= delimiter
+proc quoteString*(s: string, quote = '\"'; escape = '\0'): string {.inline.} =
+  quote & s.replace($(quote), escape & quote) & quote
+
+proc line*(s: seq[string], separator = ',', quote = '\"'; escape = '\0'; quoteAlways = false): string =
+  let
+    newline = '\r'
+    quoted = s.map(proc(x: string): string =
+      if quoteAlways or x.contains(quote) or x.contains(separator) or x.contains(newline):
+        quoteString(x, quote, escape)
+      else:
+        x
+    )
+    row = quoted.join($separator)
+  for i in quoted:
+    echo i
+  return row & newline
