@@ -68,6 +68,14 @@ proc nthField(pos: int, field, all: NimNode): NimNode {. compileTime .} =
       else: unsupported(field)
   newNimNode(nnkExprColonExpr).add(ident($(field)), arg)
 
+proc nthFieldWrite(param, field: NimNode): NimNode {. compileTime .} =
+  let value = newDotExpr(param, field)
+  result = if field.hasType("string"): value
+    elif field.hasType("int"): newCall("$", value)
+    elif field.hasType("float"): newCall("$", value)
+    elif field.hasType("TimeInfo"): newCall("date2string", value)
+    else: unsupported(field)
+
 proc objectTypeName(T: NimNode): NimNode {. compileTime .} =
   # BracketExpr
   # Sym "typeDesc"
@@ -160,3 +168,59 @@ iterator csv*[T](path: string, separator = ','; quote = '\"'; escape = '\0';
       first = false
     else:
       yield pack(row)
+
+macro genUnpackM(t, T: typed): untyped =
+  let
+    typeSym = objectTypeName(T)
+    typeSpec = getType(t)
+  typeSym.expectKind(nnkSym)
+  typeSpec.expectKind(nnkObjectTy)
+  let param = genSym(nskParam, "s")
+  var s = newSeq[NimNode]()
+  for sym in typeSpec[1]:
+    s.add(nthFieldWrite(param, sym))
+  let
+    fields = newNimNode(nnkBracket).add(s)
+    procName = genSym(nskProc)
+  result = newStmtList(
+    newProc(
+      name = procName,
+      params = [newNimNode(nnkBracketExpr).add(ident("seq"), ident("string")),
+        newIdentDefs(param, typeSym)],
+      body = newStmtList(prefix(fields, "@"))
+    ),
+    procName)
+
+proc genUnpack*(T: typedesc, dateLayout: string = nil): proc (t: T): seq[string] =
+  ## Generater a serializer for the type ``T``.
+  ##
+  ## This is a procedure that will convert from an object of type ``T`` to
+  ## a sequence of strings.
+  ##
+  ## The type ``T`` must be a flat object whose fields are numbers, strings or ``TimeInfo``.
+  var t: T
+  return genUnpackM(t, T)
+
+# proc line*[T](t: T, separator = ',', quote = '\"'; escape = '\0'; quoteAlways = false): string =
+#   var csvRow = ""
+#   for j in 0..high(csv[i]):
+#
+#       # Escape the quotes, if the user wants that.
+#       var item : string = csv[i][j]
+#       if escapeQuotes and (item.contains("\"") or item.contains("'")):
+#           item = item.replace("\"", "\\\"").replace("'", "\\'")
+#
+#       # Quote always if the user wants that, otherwise only do it if necessary.
+#       if quoteAlways:
+#           item = "\"" & item & "\""
+#       elif item.contains("\"") or item.contains("'") or item.contains(separator):
+#           item = "\"" & item & "\""
+#       else:
+#           item = item.quoteIfContainsWhite()
+#
+#       # Add the item.
+#       csvStrRow &= item
+#
+#       # Only add a separator if it isn't the last item.
+#       if j != high(csv[i]):
+#           csvStrRow &= delimiter

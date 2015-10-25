@@ -35,3 +35,13 @@ suite "reading csv":
     let ticks = toSeq(csv[Tick](file, dateLayout = "yyyy-MM-dd HH:mm:ss", skipHeader = true))
     check(ticks[0].Date.weekday == dThu)
     check(ticks[3].Open == 102.349982071)
+
+suite "writing csv":
+  test "converting a single row":
+    type Person = object
+      name, surname: string
+      age: int
+    let
+      me = Person(name: "Andrea", surname: "Ferretti", age: 34)
+      unpack = genUnpack(Person)
+    check(unpack(me) == @["Andrea","Ferretti","34"])
