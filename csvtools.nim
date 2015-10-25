@@ -201,10 +201,10 @@ proc genUnpack*(T: typedesc, dateLayout: string = nil): proc (t: T): seq[string]
   var t: T
   return genUnpackM(t, T)
 
-proc quoteString*(s: string, quote = '\"'; escape = '\0'): string {.inline.} =
+proc quoteString*(s: string, quote = '\"'; escape = '\"'): string {.inline.} =
   quote & s.replace($(quote), escape & quote) & quote
 
-proc line*(s: seq[string], separator = ',', quote = '\"'; escape = '\0'; quoteAlways = false): string =
+proc line*(s: seq[string], separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false): string =
   let
     newline = '\r'
     quoted = s.map(proc(x: string): string =
