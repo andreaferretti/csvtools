@@ -224,3 +224,8 @@ iterator lines*[T](ts: openarray[T], separator = ',', quote = '\"'; escape = '\"
   let unpack = genUnpack(T)
   for t in ts:
     yield connect(unpack(t), separator, quote, escape, quoteAlways)
+
+iterator lines*[T](ts: iterator: T, separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false): string =
+  let unpack = genUnpack(T)
+  for t in ts():
+    yield connect(unpack(t), separator, quote, escape, quoteAlways)
