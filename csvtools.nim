@@ -202,9 +202,21 @@ proc genUnpack*(T: typedesc, dateLayout: string = nil): proc (t: T): seq[string]
   return genUnpackM(t, T)
 
 proc quoteString*(s: string, quote = '\"'; escape = '\"'): string {.inline.} =
+  ## Quote a single field in order to write it in CSV format
   quote & s.replace($(quote), escape & quote) & quote
 
 proc connect*(s: seq[string], separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false): string =
+  ## Returns a string that represents a row in a CSV, obtained by quoting and joining
+  ## the fields in ``s``.
+  ##
+  ## The writer's behaviour can be controlled by
+  ## the diverse optional parameters:
+  ## - `separator`: character used to separate fields
+  ## - `quote`: Used to quote fields containing special characters like
+  ##   `separator`, `quote` or new-line characters.
+  ## - `escape`: removes any special meaning from the following character;
+  ## - `quoteAlways`: If true, fields are quoted regardless of whether they
+  ##   contain special characters.
   let
     newline = '\r'
     quoted = s.map(proc(x: string): string =
@@ -217,24 +229,89 @@ proc connect*(s: seq[string], separator = ',', quote = '\"'; escape = '\"'; quot
   return row & newline
 
 proc line*[T](t: T, separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false): string =
+  ## Returns a string that represents a row in a CSV, obtained by quoting and joining
+  ## the fields in ``t``.
+  ##
+  ## The type ``T`` must be a flat object whose fields are numbers, strings or ``TimeInfo``.
+  ##
+  ## The writer's behaviour can be controlled by
+  ## the diverse optional parameters:
+  ## - `separator`: character used to separate fields
+  ## - `quote`: Used to quote fields containing special characters like
+  ##   `separator`, `quote` or new-line characters.
+  ## - `escape`: removes any special meaning from the following character;
+  ## - `quoteAlways`: If true, fields are quoted regardless of whether they
+  ##   contain special characters.
   let unpack = genUnpack(T)
   connect(unpack(t), separator, quote, escape, quoteAlways)
 
 iterator lines*[T](ts: openarray[T], separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false): string =
+  ## Iterator over the rows in a CSV, each one obtained by calling ``line``
+  ## on an element in ``ts``.
+  ##
+  ## The type ``T`` must be a flat object whose fields are numbers, strings or ``TimeInfo``.
+  ##
+  ## The writer's behaviour can be controlled by
+  ## the diverse optional parameters:
+  ## - `separator`: character used to separate fields
+  ## - `quote`: Used to quote fields containing special characters like
+  ##   `separator`, `quote` or new-line characters.
+  ## - `escape`: removes any special meaning from the following character;
+  ## - `quoteAlways`: If true, fields are quoted regardless of whether they
+  ##   contain special characters.
   let unpack = genUnpack(T)
   for t in ts:
     yield connect(unpack(t), separator, quote, escape, quoteAlways)
 
 iterator lines*[T](ts: iterator: T, separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false): string =
+  ## Iterator over the rows in a CSV, each one obtained by calling ``line``
+  ## on an element in ``ts``.
+  ##
+  ## The type ``T`` must be a flat object whose fields are numbers, strings or ``TimeInfo``.
+  ##
+  ## The writer's behaviour can be controlled by
+  ## the diverse optional parameters:
+  ## - `separator`: character used to separate fields
+  ## - `quote`: Used to quote fields containing special characters like
+  ##   `separator`, `quote` or new-line characters.
+  ## - `escape`: removes any special meaning from the following character;
+  ## - `quoteAlways`: If true, fields are quoted regardless of whether they
+  ##   contain special characters.
   let unpack = genUnpack(T)
   for t in ts():
     yield connect(unpack(t), separator, quote, escape, quoteAlways)
 
 proc writeToCsv*[T](ts: openarray[T], f: var File, separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false) =
+  ## Writes rows in a CSV file ``f``, each one obtained by calling ``line``
+  ## on an element in ``ts``.
+  ##
+  ## The type ``T`` must be a flat object whose fields are numbers, strings or ``TimeInfo``.
+  ##
+  ## The writer's behaviour can be controlled by
+  ## the diverse optional parameters:
+  ## - `separator`: character used to separate fields
+  ## - `quote`: Used to quote fields containing special characters like
+  ##   `separator`, `quote` or new-line characters.
+  ## - `escape`: removes any special meaning from the following character;
+  ## - `quoteAlways`: If true, fields are quoted regardless of whether they
+  ##   contain special characters.
   for line in lines(ts, separator, quote, escape, quoteAlways):
     f.write(line)
 
 proc writeToCsv*[T](ts: openarray[T], path: string, separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false) =
+  ## Writes rows in a CSV file with path ``path``, each one obtained by calling ``line``
+  ## on an element in ``ts``.
+  ##
+  ## The type ``T`` must be a flat object whose fields are numbers, strings or ``TimeInfo``.
+  ##
+  ## The writer's behaviour can be controlled by
+  ## the diverse optional parameters:
+  ## - `separator`: character used to separate fields
+  ## - `quote`: Used to quote fields containing special characters like
+  ##   `separator`, `quote` or new-line characters.
+  ## - `escape`: removes any special meaning from the following character;
+  ## - `quoteAlways`: If true, fields are quoted regardless of whether they
+  ##   contain special characters.
   var f = open(path, fmWrite)
   defer:
     f.close()
