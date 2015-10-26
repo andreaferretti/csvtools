@@ -79,3 +79,12 @@ suite "writing csv":
       "Marco,Firrincieli,34\r",
       "Stefano,Pascolutti,32\r"
     ])
+  test "writing to file":
+    let people = [
+      Person(name: "Andrea", surname: "Ferretti", age: 34),
+      Person(name: "Marco", surname: "Firrincieli", age: 34),
+      Person(name: "Stefano", surname: "Pascolutti", age: 32)
+    ]
+    people.writeToCsv("test.csv")
+
+    check(readFile("test.csv") == readFile("expected.csv"))

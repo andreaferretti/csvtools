@@ -229,3 +229,13 @@ iterator lines*[T](ts: iterator: T, separator = ',', quote = '\"'; escape = '\"'
   let unpack = genUnpack(T)
   for t in ts():
     yield connect(unpack(t), separator, quote, escape, quoteAlways)
+
+proc writeToCsv*[T](ts: openarray[T], f: var File, separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false) =
+  for line in lines(ts, separator, quote, escape, quoteAlways):
+    f.write(line)
+
+proc writeToCsv*[T](ts: openarray[T], path: string, separator = ',', quote = '\"'; escape = '\"'; quoteAlways = false) =
+  var f = open(path, fmWrite)
+  defer:
+    f.close()
+  writeToCsv(ts, f, separator, quote, escape, quoteAlways)
