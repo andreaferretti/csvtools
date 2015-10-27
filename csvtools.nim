@@ -13,7 +13,7 @@
 # limitations under the License.
 import os, streams, macros, sequtils, strutils, parseutils, parsecsv, times
 
-## Manage CSV files easily in Nim. At this moment only reading is supported.
+## Manage CSV files easily in Nim.
 ##
 ## Example of a simple iterator over rows as ``seq[string]``
 ##
@@ -37,6 +37,35 @@ import os, streams, macros, sequtils, strutils, parseutils, parsecsv, times
 ##       dateLayout = "yyyy-MM-dd HH:mm:ss", skipHeader = true):
 ##       echo payment.amount
 ##       echo payment.time.weekday
+## Writing back into a file
+##
+##   .. code-block::nim
+##     import csvtools
+##
+##     type Payment = object
+##       accountFrom, accountTo: string
+##       amount: float
+##
+##     let payments: seq[Payment] = # ...
+##
+##     payments.writeToCsv("payments.csv")
+##
+## Writing back, one line at a time
+##
+##   .. code-block::nim
+##     import csvtools
+##
+##     type Payment = object
+##       accountFrom, accountTo: string
+##       amount: float
+##
+##     let payments: seq[Payment] = # ...
+##
+##     var f = open("payments.csv", fmWrite)
+##     # lines is an iterator of strings
+##     for line in lines(payments):
+##       f.write(line)
+##     f.close()
 
 
 proc string2int*(s: string): int =

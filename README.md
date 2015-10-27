@@ -71,8 +71,8 @@ type Payment = object
 
 let payments: seq[Payment] = # ...
 
-# lines is an iterator of strings
 var f = open("payments.csv", fmWrite)
+# lines is an iterator of strings
 for line in lines(payments):
   f.write(line)
 f.close()
