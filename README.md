@@ -1,6 +1,8 @@
 CSVtools
 ========
 
+[![nimble](https://raw.githubusercontent.com/yglukhov/nimble-tag/master/nimble.png)](https://github.com/yglukhov/nimble-tag)
+
 Manage CSV files easily in Nim.
 
 The aim is to be able to transform CSV files into typed iterators, infering
