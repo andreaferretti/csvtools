@@ -121,7 +121,7 @@ macro genPackM(t, T: typed): untyped =
   var
     pos = 0
     body = newNimNode(nnkObjConstr).add(typeSym)
-  for sym in typeSpec[1]:
+  for sym in typeSpec[2]:
     body.add(nthField(pos, sym, param))
     inc(pos)
   let procName = genSym(nskProc)
@@ -206,7 +206,7 @@ macro genUnpackM(t, T: typed): untyped =
   typeSpec.expectKind(nnkObjectTy)
   let param = genSym(nskParam, "s")
   var s = newSeq[NimNode]()
-  for sym in typeSpec[1]:
+  for sym in typeSpec[2]:
     s.add(nthFieldWrite(param, sym))
   let
     fields = newNimNode(nnkBracket).add(s)

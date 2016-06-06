@@ -19,6 +19,9 @@ viceversa the transformation from a sequence of strings into a `T` - is handled
 by a macro. This macro assumes that `T` is a flat type, meaning that its
 members are either numbers, dates (`TimeInfo`) or strings.
 
+The library is updated on Nim devel. For Nim up to 0.13, use version 0.1.0
+of csvtools.
+
 [Api documentation](http://unicredit.github.io/csvtools/)
 
 Examples
