@@ -35,6 +35,13 @@ suite "reading csv":
     let ticks = toSeq(csv[Tick](file, dateLayout = "yyyy-MM-dd HH:mm:ss", skipHeader = true))
     check(ticks[0].Date.weekday == dThu)
     check(ticks[3].Open == 102.349982071)
+  test "reading rows with custom delimiters":
+    type Tick = object
+      Date: string
+      Open, High, Low, Close, Volume, AdjClose: float64
+    let ticks = toSeq(csv[Tick]("goog-tab.csv", skipHeader = false, separator = '\t'))
+    check(ticks[0].Date == "2004-09-09 00:00:00")
+    check(ticks[3].Open == 102.349982071)
 
 suite "writing csv":
   type Person = object
@@ -50,10 +57,10 @@ suite "writing csv":
     check(quoteString(x) == "\"string\"\"\"")
   test "writing a row from a seq":
     let x = @["Hello", "this\"", "is\\", "a,", "string"]
-    check(connect(x) == "Hello,\"this\"\"\",is\\,\"a,\",string\r")
+    check(connect(x) == "Hello,\"this\"\"\",is\\,\"a,\",string\l")
   test "writing a typed row":
     let me = Person(name: "Andrea", surname: "Ferretti", age: 34)
-    check(line(me) == "Andrea,Ferretti,34\r")
+    check(line(me) == "Andrea,Ferretti,34\l")
   test "generating row iterator":
     let people = [
       Person(name: "Andrea", surname: "Ferretti", age: 34),
@@ -61,9 +68,9 @@ suite "writing csv":
       Person(name: "Stefano", surname: "Pascolutti", age: 32)
     ]
     check(toSeq(lines(people)) == @[
-      "Andrea,Ferretti,34\r",
-      "Marco,Firrincieli,34\r",
-      "Stefano,Pascolutti,32\r"
+      "Andrea,Ferretti,34\l",
+      "Marco,Firrincieli,34\l",
+      "Stefano,Pascolutti,32\l"
     ])
   test "generating row iterator from iterator":
     proc people(): auto =
@@ -75,9 +82,9 @@ suite "writing csv":
       return inner
 
     check(toSeq(lines(people())) == @[
-      "Andrea,Ferretti,34\r",
-      "Marco,Firrincieli,34\r",
-      "Stefano,Pascolutti,32\r"
+      "Andrea,Ferretti,34\l",
+      "Marco,Firrincieli,34\l",
+      "Stefano,Pascolutti,32\l"
     ])
   test "writing to file":
     let people = [
@@ -88,3 +95,11 @@ suite "writing csv":
     people.writeToCsv("test.csv")
 
     check(readFile("test.csv") == readFile("expected.csv"))
+  test "writing to file with custom delimiters":
+    type Tick = object
+      Date: string
+      Open, High, Low, Close, Volume, AdjClose: float64
+    let ticks = toSeq(csv[Tick](file, skipHeader = true))
+    ticks[0 .. 4].writeToCsv("test.csv", separator = '\t')
+
+    check(readFile("test.csv") == readFile("goog-tab.csv"))

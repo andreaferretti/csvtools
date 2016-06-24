@@ -166,7 +166,7 @@ iterator csvRows*(path: string, separator = ','; quote = '\"'; escape = '\0';
   var s = newFileStream(path, fmRead)
   if s == nil: quit("cannot open the file" & path)
   var x: CsvParser
-  open(x, s, path)
+  open(x, s, path, separator, quote, escape, skipInitialSpace)
   while readRow(x):
     yield x.row
   close(x)
@@ -192,7 +192,7 @@ iterator csv*[T](path: string, separator = ','; quote = '\"'; escape = '\0';
   ##   a header, and thus skipped
   let pack = genPack(T, dateLayout)
   var first = true
-  for row in csvRows(path):
+  for row in csvRows(path, separator, quote, escape, skipInitialSpace):
     if unlikely(skipHeader and first):
       first = false
     else:
@@ -249,7 +249,7 @@ proc connect*(s: seq[string], separator = ',', quote = '\"'; escape = '\"';
   ## - `quoteAlways`: If true, fields are quoted regardless of whether they
   ##   contain special characters.
   let
-    newline = '\r'
+    newline = '\l'
     quoted = s.map(proc(x: string): string =
       if quoteAlways or x.contains(quote) or x.contains(separator) or x.contains(newline):
         quoteString(x, quote, escape)
