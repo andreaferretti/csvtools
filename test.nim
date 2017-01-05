@@ -16,27 +16,29 @@ import unittest, sequtils, csvtools, times
 
 const file = "goog.csv"
 
+type Tick = object
+  Date: string
+  Open, High, Low, Close, Volume, AdjClose: float64
+
+type TickD = object
+  Date: TimeInfo
+  Open, High, Low, Close, Volume, AdjClose: float64
+
 suite "reading csv":
   test "reading raw rows":
     let ticks = toSeq(csvRows(file))
     check(ticks[1][0] == "2004-09-09 00:00:00")
     check(ticks[4][1] == "102.349982071")
   test "reading typed rows":
-    type Tick = object
-      Date: string
-      Open, High, Low, Close, Volume, AdjClose: float64
     let ticks = toSeq(csv[Tick](file, skipHeader = true))
     check(ticks[0].Date == "2004-09-09 00:00:00")
     check(ticks[3].Open == 102.349982071)
   test "reading typed rows with dates":
-    type Tick = object
-      Date: TimeInfo
-      Open, High, Low, Close, Volume, AdjClose: float64
-    let ticks = toSeq(csv[Tick](file, dateLayout = "yyyy-MM-dd HH:mm:ss", skipHeader = true))
+    let ticks = toSeq(csv[TickD](file, dateLayout = "yyyy-MM-dd HH:mm:ss", skipHeader = true))
     check(ticks[0].Date.weekday == dThu)
     check(ticks[3].Open == 102.349982071)
   test "reading rows with custom delimiters":
-    type Tick = object
+    type Tick3 = object
       Date: string
       Open, High, Low, Close, Volume, AdjClose: float64
     let ticks = toSeq(csv[Tick]("goog-tab.csv", skipHeader = false, separator = '\t'))
@@ -96,9 +98,6 @@ suite "writing csv":
 
     check(readFile("test.csv") == readFile("expected.csv"))
   test "writing to file with custom delimiters":
-    type Tick = object
-      Date: string
-      Open, High, Low, Close, Volume, AdjClose: float64
     let ticks = toSeq(csv[Tick](file, skipHeader = true))
     ticks[0 .. 4].writeToCsv("test.csv", separator = '\t')
 

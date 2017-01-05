@@ -80,14 +80,14 @@ proc string2float*(s: string): float =
   ## This is a helper proc that should not be needed explicitly in client code.
   doAssert parseFloat(s, result) > 0
 
-proc hasType(x: NimNode, t: static[string]): bool {. compileTime .} =
+proc hasType(x: NimNode, t: static[string]): bool =
   sameType(x, bindSym(t))
 
-proc unsupported(x: NimNode): NimNode {. compileTime .} =
+proc unsupported(x: NimNode): NimNode =
   error("Unsupported type for field: " & $(x))
   newNimNode(nnkEmpty)
 
-proc nthField(pos: int, field, all: NimNode): NimNode {. compileTime .} =
+proc nthField(pos: int, field, all: NimNode): NimNode =
   let
     value = newNimNode(nnkBracketExpr).add(all, newIntLitNode(pos))
     arg = if field.hasType("string"): value
@@ -97,7 +97,7 @@ proc nthField(pos: int, field, all: NimNode): NimNode {. compileTime .} =
       else: unsupported(field)
   newNimNode(nnkExprColonExpr).add(ident($(field)), arg)
 
-proc nthFieldWrite(param, field: NimNode): NimNode {. compileTime .} =
+proc nthFieldWrite(param, field: NimNode): NimNode =
   let value = newDotExpr(param, field)
   result = if field.hasType("string"): value
     elif field.hasType("int"): newCall("$", value)
@@ -105,7 +105,7 @@ proc nthFieldWrite(param, field: NimNode): NimNode {. compileTime .} =
     elif field.hasType("TimeInfo"): newCall("date2string", value)
     else: unsupported(field)
 
-proc objectTypeName(T: NimNode): NimNode {. compileTime .} =
+proc objectTypeName(T: NimNode): NimNode =
   # BracketExpr
   # Sym "typeDesc"
   # Sym "Person"
