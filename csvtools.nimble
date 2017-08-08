@@ -16,4 +16,4 @@ task test, "run standard tests":
   --debuginfo
   --path: "."
   --run
-  setCommand "c", "test"
+  setCommand "c", "test.nim"
