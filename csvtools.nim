@@ -93,7 +93,7 @@ proc nthField(pos: int, field, all: NimNode): NimNode =
     arg = if field.hasType("string"): value
       elif field.hasType("int"): newCall("string2int", value)
       elif field.hasType("float"): newCall("string2float", value)
-      elif field.hasType("TimeInfo"): newCall("string2date", value)
+      elif field.hasType("DateTime"): newCall("string2date", value)
       else: unsupported(field)
   newNimNode(nnkExprColonExpr).add(ident($(field)), arg)
 
@@ -102,7 +102,7 @@ proc nthFieldWrite(param, field: NimNode): NimNode =
   result = if field.hasType("string"): value
     elif field.hasType("int"): newCall("$", value)
     elif field.hasType("float"): newCall("$", value)
-    elif field.hasType("TimeInfo"): newCall("date2string", value)
+    elif field.hasType("DateTime"): newCall("date2string", value)
     else: unsupported(field)
 
 proc objectTypeName(T: NimNode): NimNode =
@@ -140,9 +140,9 @@ proc genPack*(T: typedesc, dateLayout: string = nil): proc (s: seq[string]): T =
   ## This is a procedure that will convert from a sequence of strings to
   ## an object of type ``T``.
   ##
-  ## The type ``T`` must be a flat object whose fields are numbers, strings or ``TimeInfo``.
+  ## The type ``T`` must be a flat object whose fields are numbers, strings or ``DateTime``.
   var t: T
-  proc string2date(s: string): TimeInfo = parse(s, dateLayout)
+  proc string2date(s: string): DateTime = parse(s, dateLayout)
   return genPackM(t, T)
 
 iterator csvRows*(path: string, separator = ','; quote = '\"'; escape = '\0';
@@ -228,7 +228,7 @@ proc genUnpack*(T: typedesc, dateLayout: string = nil): proc (t: T): seq[string]
   ##
   ## The type ``T`` must be a flat object whose fields are numbers, strings or ``TimeInfo``.
   var t: T
-  proc date2string(s: TimeInfo): string = format(s, dateLayout)
+  proc date2string(s: DateTime): string = format(s, dateLayout)
   return genUnpackM(t, T)
 
 proc quoteString*(s: string, quote = '\"'; escape = '\"'): string {.inline.} =

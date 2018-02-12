@@ -21,7 +21,7 @@ type Tick = object
   Open, High, Low, Close, Volume, AdjClose: float64
 
 type TickD = object
-  Date: TimeInfo
+  Date: DateTime
   Open, High, Low, Close, Volume, AdjClose: float64
 
 suite "reading csv":
