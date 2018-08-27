@@ -134,7 +134,7 @@ macro genPackM(t, T: typed): untyped =
     ),
     procName)
 
-proc genPack*(T: typedesc, dateLayout: string = nil): proc (s: seq[string]): T =
+proc genPack*(T: typedesc, dateLayout: string = ""): proc (s: seq[string]): T =
   ## Generater a deserializer for the type ``T``.
   ##
   ## This is a procedure that will convert from a sequence of strings to
@@ -172,7 +172,7 @@ iterator csvRows*(path: string, separator = ','; quote = '\"'; escape = '\0';
   close(x)
 
 iterator csv*[T](path: string, separator = ','; quote = '\"'; escape = '\0';
-  skipInitialSpace = false, skipHeader = false, dateLayout: string = nil): T =
+  skipInitialSpace = false, skipHeader = false, dateLayout: string = ""): T =
   ## Typed iterator over the rows of ``path``.
   ##
   ## The type ``T`` must be a flat object whose fields are numbers, strings or ``TimeInfo``.
@@ -220,7 +220,7 @@ macro genUnpackM(t, T: typed): untyped =
     ),
     procName)
 
-proc genUnpack*(T: typedesc, dateLayout: string = nil): proc (t: T): seq[string] =
+proc genUnpack*(T: typedesc, dateLayout: string = ""): proc (t: T): seq[string] =
   ## Generater a serializer for the type ``T``.
   ##
   ## This is a procedure that will convert from an object of type ``T`` to
@@ -260,7 +260,7 @@ proc connect*(s: seq[string], separator = ',', quote = '\"'; escape = '\"';
   return row & newline
 
 proc line*[T](t: T, separator = ',', quote = '\"'; escape = '\"';
-  quoteAlways = false; dateLayout: string = nil): string =
+  quoteAlways = false; dateLayout: string = ""): string =
   ## Returns a string that represents a row in a CSV, obtained by quoting
   ## and joining the fields in ``t``.
   ##
@@ -278,7 +278,7 @@ proc line*[T](t: T, separator = ',', quote = '\"'; escape = '\"';
   connect(unpack(t), separator, quote, escape, quoteAlways)
 
 iterator lines*[T](ts: openarray[T], separator = ',', quote = '\"';
-  escape = '\"'; quoteAlways = false; dateLayout: string = nil): string =
+  escape = '\"'; quoteAlways = false; dateLayout: string = ""): string =
   ## Iterator over the rows in a CSV, each one obtained by calling ``line``
   ## on an element in ``ts``.
   ##
@@ -297,7 +297,7 @@ iterator lines*[T](ts: openarray[T], separator = ',', quote = '\"';
     yield connect(unpack(t), separator, quote, escape, quoteAlways)
 
 iterator lines*[T](ts: iterator: T, separator = ',', quote = '\"';
-  escape = '\"'; quoteAlways = false; dateLayout: string = nil): string =
+  escape = '\"'; quoteAlways = false; dateLayout: string = ""): string =
   ## Iterator over the rows in a CSV, each one obtained by calling ``line``
   ## on an element in ``ts``.
   ##
@@ -316,7 +316,7 @@ iterator lines*[T](ts: iterator: T, separator = ',', quote = '\"';
     yield connect(unpack(t), separator, quote, escape, quoteAlways)
 
 proc writeToCsv*[T](ts: openarray[T], f: var File, separator = ',',
-  quote = '\"'; escape = '\"'; quoteAlways = false; dateLayout: string = nil) =
+  quote = '\"'; escape = '\"'; quoteAlways = false; dateLayout: string = "") =
   ## Writes rows in a CSV file ``f``, each one obtained by calling ``line``
   ## on an element in ``ts``.
   ##
@@ -334,7 +334,7 @@ proc writeToCsv*[T](ts: openarray[T], f: var File, separator = ',',
     f.write(line)
 
 proc writeToCsv*[T](ts: openarray[T], path: string, separator = ',',
-  quote = '\"'; escape = '\"'; quoteAlways = false; dateLayout: string = nil) =
+  quote = '\"'; escape = '\"'; quoteAlways = false; dateLayout: string = "") =
   ## Writes rows in a CSV file with path ``path``, each one obtained
   ## by calling ``line`` on an element in ``ts``.
   ##
