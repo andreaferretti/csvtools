@@ -94,32 +94,34 @@ proc unsupported(x: NimNode): NimNode =
 
 proc getBaseType(x: NimNode): NimNode =
   result = x
-  while result.typeKind == ntyDistinct:
+  # Skip alias and distinct to get the type
+  while result.typeKind in {ntyAlias, ntyDistinct}:
     result = getType(result)
-    result = result[1]
+    if result.typeKind == ntyDistinct:
+      result = result[1]
 
-proc getValue(field, row: NimNode, pos: var int): NimNode =
-  let field = getBaseType(field)
-  if field.typeKind == ntyArray:
-    let impl = getType(field)
+proc getValue(fieldTy, row: NimNode, pos: var int): NimNode =
+  let baseTy = getBaseType(fieldTy)
+  if baseTy.typeKind == ntyArray:
+    let impl = getType(baseTy)
     impl[1].expectKind(nnkBracketExpr)
-    result = newNimNode(nnkBracket)
+    result = newCall(fieldTy, newNimNode(nnkBracket))
     for i in impl[1][1].intVal .. impl[1][2].intVal:
-      result.add getValue(impl[2], row, pos)
+      result[1].add getValue(impl[2], row, pos)
   else:
     let value = nnkBracketExpr.newTree(row, newIntLitNode(pos))
-    if field.typeKind == ntyString:
-      result = value
-    elif field.typeKind in {ntyInt .. ntyInt64}:
-      result = newCall(field, newCall("string2int", value))
-    elif field.typeKind in {ntyFloat .. ntyFloat64}:
-      result = newCall(field, newCall("string2float", value))
-    elif field.typeKind in {ntyUInt .. ntyUInt64}:
-      result = newCall(field, newCall("string2uint", value))
-    elif field.sameType(bindSym"DateTime"):
-      result = newCall("string2date", value)
+    if baseTy.typeKind == ntyString:
+      result = newCall(fieldTy, value)
+    elif baseTy.typeKind in {ntyInt..ntyInt64}:
+      result = newCall(fieldTy, newCall("string2int", value))
+    elif baseTy.typeKind in {ntyFloat..ntyFloat64}:
+      result = newCall(fieldTy, newCall("string2float", value))
+    elif baseTy.typeKind in {ntyUInt..ntyUInt64}:
+      result = newCall(fieldTy, newCall("string2uint", value))
+    elif baseTy.sameType(bindSym"DateTime"):
+      result = newCall(fieldTy, newCall("string2date", value))
     else:
-      error(field.lineInfo & ": Unsupported type for field")
+      error(fieldTy.lineInfo & ": Unsupported type for field")
     inc(pos)
 
 proc nthField(pos: int, field, all: NimNode): NimNode =
