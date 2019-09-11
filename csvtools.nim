@@ -113,7 +113,7 @@ proc getValue(fieldTy, row: NimNode, pos: var int): NimNode =
     result = newCall(fieldTy, newCall("string2uint", value))
     pos.inc
   elif field.hasType("DateTime"):
-    newCall("string2date", value)
+    result = newCall("string2date", value)
     pos.inc
   elif fieldTy.kind == nnkBracketExpr and fieldTy[0].eqIdent("array"):
     fieldTy[1].expectKind(nnkInfix)
