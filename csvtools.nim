@@ -110,11 +110,13 @@ proc getValue(fieldTy, row: NimNode, pos: var int): NimNode =
     if fieldTy.eqIdent("string"):
       result = value
     elif fieldTy.hasTypeClass(bindSym"SomeSignedInt"):
-      result = newCall(fieldTy, newCall(bindSym"parseInt", value))
+      result = newCall(fieldTy, newCall("string2int", value))
     elif fieldTy.hasTypeClass(bindSym"SomeFloat"):
-      result = newCall(fieldTy, newCall(bindSym"parseFloat", value))
+      result = newCall(fieldTy, newCall("string2float", value))
     elif fieldTy.hasTypeClass(bindSym"SomeUnsignedInt"):
-      result = newCall(fieldTy, newCall(bindSym"parseUInt", value))
+      result = newCall(fieldTy, newCall("string2uint", value))
+    elif elif field.hasType("DateTime"):
+      result = newCall("string2date", value)
     else:
       error(fieldTy.lineInfo & ": Unsupported type for field")
     inc(pos)
