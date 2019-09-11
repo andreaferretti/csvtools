@@ -100,28 +100,24 @@ proc unsupported(x: NimNode): NimNode =
   newNimNode(nnkEmpty)
 
 proc getValue(fieldTy, row: NimNode, pos: var int): NimNode =
-  let value = nnkBracketExpr.newTree(row, newIntLitNode(pos))
-  if fieldTy.eqIdent("string"):
-    result = value
-  elif fieldTy.hasTypeClass(bindSym"SomeSignedInt"):
-    result = newCall(fieldTy, newCall("string2int", value))
-    pos.inc
-  elif fieldTy.hasTypeClass(bindSym"SomeFloat"):
-    result = newCall(fieldTy, newCall("string2float", value))
-    pos.inc
-  elif fieldTy.hasTypeClass(bindSym"SomeUnsignedInt"):
-    result = newCall(fieldTy, newCall("string2uint", value))
-    pos.inc
-  elif field.hasType("DateTime"):
-    result = newCall("string2date", value)
-    pos.inc
-  elif fieldTy.kind == nnkBracketExpr and fieldTy[0].eqIdent("array"):
+  if fieldTy.kind == nnkBracketExpr and fieldTy[0].eqIdent("array"):
     fieldTy[1].expectKind(nnkInfix)
     result = newNimNode(nnkBracket)
     for i in fieldTy[1][1].intVal .. fieldTy[1][2].intVal:
       result.add getValue(fieldTy[2], row, pos)
   else:
-    error(fieldTy.lineInfo & ": Unsupported type for field")
+    let value = nnkBracketExpr.newTree(row, newIntLitNode(pos))
+    if fieldTy.eqIdent("string"):
+      result = value
+    elif fieldTy.hasTypeClass(bindSym"SomeSignedInt"):
+      result = newCall(fieldTy, newCall(bindSym"parseInt", value))
+    elif fieldTy.hasTypeClass(bindSym"SomeFloat"):
+      result = newCall(fieldTy, newCall(bindSym"parseFloat", value))
+    elif fieldTy.hasTypeClass(bindSym"SomeUnsignedInt"):
+      result = newCall(fieldTy, newCall(bindSym"parseUInt", value))
+    else:
+      error(fieldTy.lineInfo & ": Unsupported type for field")
+    inc(pos)
 
 proc nthField(pos: int, field, all: NimNode): NimNode =
   let
