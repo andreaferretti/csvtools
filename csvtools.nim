@@ -67,6 +67,11 @@ import os, streams, macros, sequtils, strutils, parseutils, parsecsv, times
 ##       f.write(line)
 ##     f.close()
 
+proc string2uint*(s: string): uint =
+  ## Parses a string as unsigned integer, throwing an assertion error over failure.
+  ##
+  ## This is a helper proc that should not be needed explicitly in client code.
+  doAssert parseUInt(s, result) > 0
 
 proc string2int*(s: string): int =
   ## Parses a string as integer, throwing an assertion error over failure.
@@ -83,9 +88,40 @@ proc string2float*(s: string): float =
 proc hasType(x: NimNode, t: static[string]): bool =
   sameType(x, bindSym(t))
 
+proc hasTypeClass(x, t: NimNode): bool =
+  let class = getType(t)
+  class.expectKind(nnkBracketExpr)
+  for i in 1 ..< class.len:
+    if class[i].eqIdent(x):
+      return true
+
 proc unsupported(x: NimNode): NimNode =
   error("Unsupported type for field: " & $(x))
   newNimNode(nnkEmpty)
+
+proc getValue(fieldTy, row: NimNode, pos: var int): NimNode =
+  let value = nnkBracketExpr.newTree(row, newIntLitNode(pos))
+  if fieldTy.eqIdent("string"):
+    result = value
+  elif fieldTy.hasTypeClass(bindSym"SomeSignedInt"):
+    result = newCall(fieldTy, newCall("string2int", value))
+    pos.inc
+  elif fieldTy.hasTypeClass(bindSym"SomeFloat"):
+    result = newCall(fieldTy, newCall("string2float", value))
+    pos.inc
+  elif fieldTy.hasTypeClass(bindSym"SomeUnsignedInt"):
+    result = newCall(fieldTy, newCall("string2uint", value))
+    pos.inc
+  elif field.hasType("DateTime"):
+    newCall("string2date", value)
+    pos.inc
+  elif fieldTy.kind == nnkBracketExpr and fieldTy[0].eqIdent("array"):
+    fieldTy[1].expectKind(nnkInfix)
+    result = newNimNode(nnkBracket)
+    for i in fieldTy[1][1].intVal .. fieldTy[1][2].intVal:
+      result.add getValue(fieldTy[2], row, pos)
+  else:
+    error(fieldTy.lineInfo & ": Unsupported type for field")
 
 proc nthField(pos: int, field, all: NimNode): NimNode =
   let
@@ -114,7 +150,7 @@ proc objectTypeName(T: NimNode): NimNode =
 macro genPackM(t, T: typed): untyped =
   let
     typeSym = objectTypeName(T)
-    typeSpec = getType(t)
+    typeSpec = getTypeImpl(t)
   typeSym.expectKind(nnkSym)
   typeSpec.expectKind(nnkObjectTy)
   let param = genSym(nskParam, "s")
@@ -122,8 +158,7 @@ macro genPackM(t, T: typed): untyped =
     pos = 0
     body = newNimNode(nnkObjConstr).add(typeSym)
   for sym in typeSpec[2]:
-    body.add(nthField(pos, sym, param))
-    inc(pos)
+    body.add(nnkExprColonExpr.newTree(sym[0], getValue(sym[1], param, pos)))
   let procName = genSym(nskProc)
   result = newStmtList(
     newProc(
