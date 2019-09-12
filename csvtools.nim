@@ -92,37 +92,48 @@ proc unsupported(x: NimNode): NimNode =
   error("Unsupported type for field: " & $(x))
   newNimNode(nnkEmpty)
 
-proc getBaseType(x: NimNode): NimNode =
-  result = x
-  # Skip alias and distinct to get the type
+proc getBaseType(n: NimNode): NimNode =
+  result = n
   while result.typeKind in {ntyAlias, ntyDistinct}:
     result = getType(result)
     if result.typeKind == ntyDistinct:
       result = result[1]
 
-proc getValue(fieldTy, row: NimNode, pos: var int): NimNode =
-  let baseTy = getBaseType(fieldTy)
-  if baseTy.typeKind == ntyArray:
-    let impl = getType(baseTy)
-    impl[1].expectKind(nnkBracketExpr)
-    result = newCall(fieldTy, newNimNode(nnkBracket))
-    for i in impl[1][1].intVal .. impl[1][2].intVal:
-      result[1].add getValue(impl[2], row, pos)
+proc process(fieldTy, param: NimNode, pos: var int): NimNode =
+  var baseTy = getBaseType(fieldTy)
+  baseTy = getTypeImpl(baseTy)
+  if baseTy.typeKind == ntyObject:
+    result = nnkObjConstr.newTree(fieldTy)
+    for n in baseTy[2]:
+      n.expectKind nnkIdentDefs
+      result.add nnkExprColonExpr.newTree(n[0], process(n[1], param, pos))
   else:
-    let value = nnkBracketExpr.newTree(row, newIntLitNode(pos))
-    if baseTy.typeKind == ntyString:
-      result = newCall(fieldTy, value)
-    elif baseTy.typeKind in {ntyInt..ntyInt64}:
-      result = newCall(fieldTy, newCall("string2int", value))
-    elif baseTy.typeKind in {ntyFloat..ntyFloat64}:
-      result = newCall(fieldTy, newCall("string2float", value))
-    elif baseTy.typeKind in {ntyUInt..ntyUInt64}:
-      result = newCall(fieldTy, newCall("string2uint", value))
-    elif baseTy.sameType(bindSym"DateTime"):
-      result = newCall(fieldTy, newCall("string2date", value))
+    if baseTy.typeKind == ntyArray:
+      result = newNimNode(nnkBracket)
+      for i in baseTy[1][1].intVal .. baseTy[1][2].intVal:
+        result.add process(baseTy[2], param, pos)
+    elif baseTy.typeKind == ntyTuple:
+      let isAnonTu = baseTy.kind == nnkTupleConstr
+      result = newNimNode(nnkPar)
+      for n in baseTy:
+        result.add process(if isAnonTu: n else: n[1], param, pos)
     else:
-      error(fieldTy.lineInfo & ": Unsupported type for field")
-    inc(pos)
+      let value = nnkBracketExpr.newTree(param, newIntLitNode(pos))
+      if baseTy.typeKind == ntyString:
+        result = value
+      elif baseTy.typeKind in {ntyInt..ntyInt64}:
+        result = newCall(baseTy, newCall("string2int", value))
+      elif baseTy.typeKind in {ntyFloat..ntyFloat64}:
+        result = newCall(baseTy, newCall("string2float", value))
+      elif baseTy.typeKind in {ntyUInt..ntyUInt64}:
+        result = newCall(baseTy, newCall("string2uint", value))
+      elif baseTy.sameType(bindSym"DateTime"):
+        result = newCall("string2date", value)
+      else:
+        error("Unsupported type: " & $fieldTy)
+      inc(pos)
+    if fieldTy.typeKind == ntyDistinct:
+      result = newCall(fieldTy, result)
 
 proc nthField(pos: int, field, all: NimNode): NimNode =
   let
@@ -148,18 +159,12 @@ proc objectTypeName(T: NimNode): NimNode =
   # Sym "Person"
   getType(T)[1]
 
-macro genPackM(t, T: typed): untyped =
-  let
-    typeSym = objectTypeName(T)
-    typeSpec = getTypeImpl(t)
+macro genPackM(T: typed): untyped =
+  let typeSym = objectTypeName(T)
   typeSym.expectKind(nnkSym)
-  typeSpec.expectKind(nnkObjectTy)
   let param = genSym(nskParam, "s")
-  var
-    pos = 0
-    body = newNimNode(nnkObjConstr).add(typeSym)
-  for sym in typeSpec[2]:
-    body.add(nnkExprColonExpr.newTree(sym[0], getValue(sym[1], param, pos)))
+  var pos = 0
+  let body = process(typeSym, param, pos)
   let procName = genSym(nskProc)
   result = newStmtList(
     newProc(
@@ -177,9 +182,8 @@ proc genPack*(T: typedesc, dateLayout: string = ""): proc (s: seq[string]): T =
   ## an object of type ``T``.
   ##
   ## The type ``T`` must be a flat object whose fields are numbers, strings or ``DateTime``.
-  var t: T
   proc string2date(s: string): DateTime = parse(s, dateLayout)
-  return genPackM(t, T)
+  return genPackM(T)
 
 iterator csvRows*(path: string, separator = ','; quote = '\"'; escape = '\0';
   skipInitialSpace = false): CsvRow =
@@ -388,3 +392,28 @@ proc writeToCsv*[T](ts: openarray[T], path: string, separator = ',',
   defer:
     f.close()
   writeToCsv(ts, f, separator, quote, escape, quoteAlways, dateLayout)
+
+when isMainModule:
+  type
+    Point = object
+      a: Weights
+      b: array[2, array[2, int32]]
+      c: Coords
+      d: Date
+      e: string
+      f: uint
+      g: tuple[y, x: int]
+      h: Something
+      j: SomethingElse
+      k: (int, float32)
+      l: Nano
+    SomethingElse = object
+      x, y: float64
+      z: Something
+    Weights = distinct array[2, int32]
+    Coords = array[2, float32]
+    Date = distinct string
+    Nano = distinct float32
+    Something = distinct tuple[x, y: int]
+
+  genPackM(Point)
