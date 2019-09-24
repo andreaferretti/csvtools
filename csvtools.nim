@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import os, streams, macros, sequtils, strutils, parseutils, parsecsv, times
+import streams, macros, sequtils, strutils, parseutils, parsecsv, times
 
 ## Manage CSV files easily in Nim.
 ##

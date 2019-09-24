@@ -1,6 +1,6 @@
 mode = ScriptMode.Verbose
 
-version       = "0.1.4"
+version       = "0.2.0"
 author        = "Andrea Ferretti"
 description   = "Manage CSV files in Nim"
 license       = "Apache2"
