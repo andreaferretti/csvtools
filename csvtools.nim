@@ -141,7 +141,7 @@ proc genPack*(T: typedesc, dateLayout: string = ""): proc (s: seq[string]): T =
   ## an object of type ``T``.
   ##
   ## The type ``T`` must be a flat object whose fields are numbers, strings or ``DateTime``.
-  var t: T
+  var t = default(T)
   proc string2date(s: string): DateTime = parse(s, dateLayout)
   return genPackM(t, T)
 
