@@ -334,7 +334,7 @@ proc writeToCsv*[T](ts: openarray[T], f: var File, separator = ',',
     f.write(line)
 
 proc writeToCsv*[T](ts: openarray[T], path: string, separator = ',',
-  quote = '\"'; escape = '\"'; quoteAlways = false; dateLayout: string = "") =
+  quote = '\"'; escape = '\"'; quoteAlways = false; dateLayout: string = "", writeHeaders: bool = true) =
   ## Writes rows in a CSV file with path ``path``, each one obtained
   ## by calling ``line`` on an element in ``ts``.
   ##
@@ -351,4 +351,10 @@ proc writeToCsv*[T](ts: openarray[T], path: string, separator = ',',
   var f = open(path, fmWrite)
   defer:
     f.close()
+
+  if writeHeaders:
+      var headers = newSeq[string]()
+      for a,b in fieldPairs(T()):
+        headers.add a
+      f.write(headers.connect())
   writeToCsv(ts, f, separator, quote, escape, quoteAlways, dateLayout)
