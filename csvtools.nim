@@ -334,7 +334,7 @@ proc writeToCsv*[T](ts: openarray[T], f: var File, separator = ',',
     f.write(line)
 
 proc writeToCsv*[T](ts: openarray[T], path: string, separator = ',',
-  quote = '\"'; escape = '\"'; quoteAlways = false; dateLayout: string = "", writeHeaders: bool = true) =
+  quote = '\"'; escape = '\"'; quoteAlways = false; dateLayout: string = "", writeHeaders: bool = false) =
   ## Writes rows in a CSV file with path ``path``, each one obtained
   ## by calling ``line`` on an element in ``ts``.
   ##
@@ -348,6 +348,7 @@ proc writeToCsv*[T](ts: openarray[T], path: string, separator = ',',
   ## - `escape`: removes any special meaning from the following character;
   ## - `quoteAlways`: If true, fields are quoted regardless of whether they
   ##   contain special characters.
+  ## - `writeHeaders`: if true, fields from ``T`` will be used to genorate a header line
   var f = open(path, fmWrite)
   defer:
     f.close()
@@ -356,5 +357,5 @@ proc writeToCsv*[T](ts: openarray[T], path: string, separator = ',',
       var headers = newSeq[string]()
       for a,b in fieldPairs(T()):
         headers.add a
-      f.write(headers.connect())
+      f.write(connect(headers, separator, quote, escape, quoteAlways))
   writeToCsv(ts, f, separator, quote, escape, quoteAlways, dateLayout)
