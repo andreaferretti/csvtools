@@ -22,7 +22,7 @@ members are either numbers, dates (`TimeInfo`) or strings.
 The library is updated on Nim devel. For Nim up to 0.13, use version 0.1.0
 of csvtools.
 
-[Api documentation](http://unicredit.github.io/csvtools/)
+[Api documentation](http://andreaferretti.github.io/csvtools/)
 
 Examples
 --------
